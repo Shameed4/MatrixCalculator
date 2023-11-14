@@ -158,7 +158,7 @@ char* infix2postfix_sf(char *infix) {
             }
             *stackPtr++ = *infixPtr;
         }
-        else if ('A' <= *infixPtr && *infixPtr <= 'Z') {
+        else if (isalpha(*infixPtr)) {
             *postfixPtr++ = *infixPtr;
         }
         infixPtr++;
@@ -174,49 +174,65 @@ char* infix2postfix_sf(char *infix) {
 }
 
 matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
-    char *postfix = infix2postfix_sf(expr);
+    char *post = infix2postfix_sf(expr);
+    char postfix[strlen(post)+1];
+    strcpy(postfix, post);
+    free(post);
     char *postfixPtr = postfix;
     
+    fprintf(stderr, "Test1\n");
     matrix_sf *stack[MAX_LINE_LEN];
     matrix_sf **stackPtr = stack;
-
-    bst_sf *intermediates = NULL;
 
     while (*postfixPtr != '\0') {
         fprintf(stderr, "%c\n", *postfixPtr);
         if (*postfixPtr == '+') {
             matrix_sf *mat2 = *--stackPtr;
+            if (!isalpha(mat2->name)) {
+                printf("freed: %c\n", mat2->name);
+                free(mat2);
+            }
             matrix_sf *mat1 = *--stackPtr;
+            if (!isalpha(mat1->name)) {
+                printf("freed: %c\n", mat1->name);
+                free(mat1);
+            }
             matrix_sf *eval = add_mats_sf(mat1, mat2);
             *stackPtr++ = eval;
-            eval->name = '+';
-            insert_bst_sf(eval, intermediates);
+            eval->name = '?';
         }
         else if (*postfixPtr == '*') {
             matrix_sf *mat2 = *--stackPtr;
+            if (!isalpha(mat2->name)) {
+                printf("freed: %c\n", mat2->name);
+                free(mat2);
+            }
             matrix_sf *mat1 = *--stackPtr;
+            if (!isalpha(mat1->name)) {
+                printf("freed: %c\n", mat1->name);
+                free(mat1);
+            }
             matrix_sf *eval = mult_mats_sf(mat1, mat2);
             *stackPtr++ = eval;
-            eval->name = '*';
-            insert_bst_sf(eval, intermediates);
+            eval->name = '?';
         }
         else if (*postfixPtr == '\'') {
             matrix_sf *mat = *--stackPtr;
+            if (!isalpha(mat->name)) {
+                printf("freed: %c\n", mat->name);
+                free(mat);
+            }
             matrix_sf *eval = transpose_mat_sf(mat);
             *stackPtr++ = eval;
-            eval->name = '\'';
-            insert_bst_sf(eval, intermediates);
+            eval->name = '?';
         }
-        else if ('A' <= *postfixPtr && *postfixPtr <= 'Z') {
+        else if (isalpha(*postfixPtr)) {
             matrix_sf *mat = find_bst_sf(*postfixPtr, root);
             *stackPtr++ = mat;
         }
         postfixPtr++;
     }
-    matrix_sf *ret = malloc(sizeof(*stack));
-    ret = *stack;
-    free(intermediates);
-    return ret;
+    return *stack;
 }
 
 matrix_sf *execute_script_sf(char *filename) {
