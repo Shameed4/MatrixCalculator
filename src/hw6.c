@@ -135,40 +135,36 @@ char priority(char c) {
 
 char* infix2postfix_sf(char *infix) {
     char stack[MAX_LINE_LEN+1] = {'$'};
-    char *postfix = malloc(sizeof(char) * MAX_LINE_LEN+1);
+    char *postfix = calloc(MAX_LINE_LEN + 1, sizeof(char));
     
-    char *infixPtr = infix; // points to current infix character being evaluated
-    char *postfixPtr = postfix; // points to where next element should be added
-    char *stackPtr = stack; // points to where next element should be added
+    int infixIdx = 0;
+    int postfixIdx = 0;
+    int stackIdx = 1;
     
-    while (*infixPtr != '\0') {
-        if (*infixPtr == '(')
-            *stackPtr++ = '(';
-        else if (*infixPtr == ')') {
-            stackPtr--;
-            while (*stackPtr != '(') {
-                *postfixPtr++ = *stackPtr;
-                stackPtr--;
+    while (infix[infixIdx] && infix[infixIdx] != '\n') {
+        if (infix[infixIdx] == '(')
+            stack[stackIdx++] = '(';
+        
+        else if (infix[infixIdx] == ')') {
+            stackIdx--;
+            while (stack[stackIdx] != '(') {
+                postfix[postfixIdx++] = stack[stackIdx--];
             }
         }
-        else if (*infixPtr == '+' || *infixPtr == '*' || *infixPtr == '\'') {
-            while (priority(*(stackPtr-1)) >= priority(*infixPtr)) {
-                *postfixPtr++ = *(stackPtr-1);
-                stackPtr--;
+        else if (infix[infixIdx] == '+' || infix[infixIdx] == '*' || infix[infixIdx] == '\'') {
+            while (priority(stack[stackIdx - 1]) >= priority(infix[infixIdx])) {
+                postfix[postfixIdx++] = stack[--stackIdx];
             }
-            *stackPtr++ = *infixPtr;
+            stack[stackIdx++] = infix[infixIdx];
         }
-        else if (isalpha(*infixPtr)) {
-            *postfixPtr++ = *infixPtr;
+        else if (isalpha(infix[infixIdx])) {
+            postfix[postfixIdx++] = infix[infixIdx];
         }
-        infixPtr++;
+        infixIdx++;
     }
-    while (*(stackPtr-1) != '$') {
-        *postfixPtr++ = *(stackPtr-1);
-        stackPtr--;
+    while (stack[--stackIdx] != '$') {
+        postfix[postfixIdx++] = stack[stackIdx];
     }
-    
-    *postfixPtr++ = '\0';
 
     return postfix;
 }
@@ -180,49 +176,37 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
     free(post);
     char *postfixPtr = postfix;
     
-    fprintf(stderr, "Test1\n");
     matrix_sf *stack[MAX_LINE_LEN];
     matrix_sf **stackPtr = stack;
 
     while (*postfixPtr != '\0') {
-        fprintf(stderr, "%c\n", *postfixPtr);
         if (*postfixPtr == '+') {
             matrix_sf *mat2 = *--stackPtr;
-            if (!isalpha(mat2->name)) {
-                printf("freed: %c\n", mat2->name);
-                free(mat2);
-            }
             matrix_sf *mat1 = *--stackPtr;
-            if (!isalpha(mat1->name)) {
-                printf("freed: %c\n", mat1->name);
-                free(mat1);
-            }
             matrix_sf *eval = add_mats_sf(mat1, mat2);
+            if (!isalpha(mat1->name))
+                free(mat1);
+            if (!isalpha(mat2->name))
+                free(mat2);
             *stackPtr++ = eval;
             eval->name = '?';
         }
         else if (*postfixPtr == '*') {
             matrix_sf *mat2 = *--stackPtr;
-            if (!isalpha(mat2->name)) {
-                printf("freed: %c\n", mat2->name);
-                free(mat2);
-            }
             matrix_sf *mat1 = *--stackPtr;
-            if (!isalpha(mat1->name)) {
-                printf("freed: %c\n", mat1->name);
-                free(mat1);
-            }
             matrix_sf *eval = mult_mats_sf(mat1, mat2);
+            if (!isalpha(mat1->name))
+                free(mat1);
+            if (!isalpha(mat2->name))
+                free(mat2);
             *stackPtr++ = eval;
             eval->name = '?';
         }
         else if (*postfixPtr == '\'') {
             matrix_sf *mat = *--stackPtr;
-            if (!isalpha(mat->name)) {
-                printf("freed: %c\n", mat->name);
-                free(mat);
-            }
             matrix_sf *eval = transpose_mat_sf(mat);
+            if (!isalpha(mat->name))
+                free(mat);
             *stackPtr++ = eval;
             eval->name = '?';
         }
@@ -232,11 +216,48 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
         }
         postfixPtr++;
     }
+    (*stack)->name = name;
     return *stack;
 }
 
 matrix_sf *execute_script_sf(char *filename) {
-   return NULL;
+    FILE *f = fopen(filename, "r");
+    
+    char *line = NULL;
+    size_t lineLength = 0;
+    
+    matrix_sf *last = NULL;
+    bst_sf *root = NULL;
+    while (getline(&line, &lineLength, f) != -1) {
+        if (!strchr(line, '='))
+            break;
+        int lineIdx = 0;
+        char name;
+        while (!isalpha(line[lineIdx]))
+            lineIdx++;
+        
+        name = line[lineIdx++];
+        while (line[lineIdx++] != '=');
+        
+        if (strchr(line, '[')) {
+            last = create_matrix_sf(name, &line[lineIdx]);
+        }
+        else {
+            last = evaluate_expr_sf(name, &line[lineIdx], root); // I believe new line is causing this issue?
+        }
+        free(line);
+        line = NULL;
+        lineLength = 0;
+        root = insert_bst_sf(last, root);
+    }
+    fclose(f);
+    matrix_sf *ret = copy_matrix(last->num_rows, last->num_cols, last->values);
+    ret->name = last->name;
+
+    free_bst_sf(root);
+
+    // printf("%p %d\n", ret, sizeof(matrix_sf) + ret->num_rows * ret->num_cols * sizeof(int));
+    return ret;
 }
 
 // This is a utility function used during testing. Feel free to adapt the code to implement some of
@@ -256,6 +277,7 @@ void print_matrix_sf(matrix_sf *mat) {
     assert(mat != NULL);
     assert(mat->num_rows <= 1000);
     assert(mat->num_cols <= 1000);
+    printf("%d %d ", mat->num_rows, mat->num_cols);
     for (unsigned int i = 0; i < mat->num_rows*mat->num_cols; i++) {
         printf("%d", mat->values[i]);
         if (i < mat->num_rows*mat->num_cols-1)

@@ -174,7 +174,7 @@ TestSuite(base_evaluate_expr, .timeout=TEST_TIMEOUT, .disabled=false);
 TestSuite(base_execute, .timeout=TEST_TIMEOUT, .disabled=false); // execute_script_sf result
 TestSuite(base_execute_valgrind, .timeout=TEST_TIMEOUT, .disabled=false);
 
-/* add_mats_sf, mult_mats_sf, transpose_mat_sf tests */
+// /* add_mats_sf, mult_mats_sf, transpose_mat_sf tests */
 // // 1. call function to check for correctness
 // // 2. call function in a main() to check for memory errors
 // Test(base_operator_return, add01, .description="Add 2 3x5 matrices") {
@@ -221,23 +221,23 @@ TestSuite(base_execute_valgrind, .timeout=TEST_TIMEOUT, .disabled=false);
 // }
 // Test(base_operator_valgrind, mult02) { expect_no_valgrind_errors(run_with_valgrind("mult02")); }
 
-Test(base_operator_return, trans01, .description="Transpose a 4x4 matrix") {
-    matrix_sf *M = copy_matrix(4, 4, (int[]){-7, 78, -87, -113, -144, -94, 22, -75, -137, -130, -113, -106, 85, -120, 50, 55});
-    matrix_sf *G = transpose_mat_sf(M);
-    expect_matrices_equal(G, 4, 4, (int[]){-7, -144, -137, 85, 78, -94, -130, -120, -87, 22, -113, 50, -113, -75, -106, 55});
-    free(M);
-    free(G);
-}
-Test(base_operator_valgrind, trans01) { expect_no_valgrind_errors(run_with_valgrind("trans01")); }
+// Test(base_operator_return, trans01, .description="Transpose a 4x4 matrix") {
+//     matrix_sf *M = copy_matrix(4, 4, (int[]){-7, 78, -87, -113, -144, -94, 22, -75, -137, -130, -113, -106, 85, -120, 50, 55});
+//     matrix_sf *G = transpose_mat_sf(M);
+//     expect_matrices_equal(G, 4, 4, (int[]){-7, -144, -137, 85, 78, -94, -130, -120, -87, 22, -113, 50, -113, -75, -106, 55});
+//     free(M);
+//     free(G);
+// }
+// Test(base_operator_valgrind, trans01) { expect_no_valgrind_errors(run_with_valgrind("trans01")); }
 
-Test(base_operator_return, trans02, .description="Transpose a 6x3 matrix") {
-    matrix_sf *X = copy_matrix(6, 3, (int[]){121, -1, 128, 78, -138, 138, -61, 51, -35, -84, 125, -83, -78, 138, 2, 81, -5, -36});
-    matrix_sf *G = transpose_mat_sf(X);
-    expect_matrices_equal(G, 3, 6, (int[]){121, 78, -61, -84, -78, 81, -1, -138, 51, 125, 138, -5, 128, 138, -35, -83, 2, -36});
-    free(X);
-    free(G);
-}
-Test(base_operator_valgrind, trans02) { expect_no_valgrind_errors(run_with_valgrind("trans02")); }
+// Test(base_operator_return, trans02, .description="Transpose a 6x3 matrix") {
+//     matrix_sf *X = copy_matrix(6, 3, (int[]){121, -1, 128, 78, -138, 138, -61, 51, -35, -84, 125, -83, -78, 138, 2, 81, -5, -36});
+//     matrix_sf *G = transpose_mat_sf(X);
+//     expect_matrices_equal(G, 3, 6, (int[]){121, 78, -61, -84, -78, 81, -1, -138, 51, 125, 138, -5, 128, 138, -35, -83, 2, -36});
+//     free(X);
+//     free(G);
+// }
+// Test(base_operator_valgrind, trans02) { expect_no_valgrind_errors(run_with_valgrind("trans02")); }
 
 // /* insert_bst_sf() tests */
 // void inorder_sf(bst_sf *root, char *output) {
@@ -429,12 +429,12 @@ Test(base_operator_valgrind, trans02) { expect_no_valgrind_errors(run_with_valgr
 //         actual, expected);
 // }
 
-/* evaluate_expr_sf tests*/
-Test(base_evaluate_expr, expr01, .description="Given root of a tree, evaluation of an expression") {
-    bst_sf* root = build_bst();
-    matrix_sf* result = evaluate_expr_sf('R', "G * C + F'", root);
-    expect_matrices_equal(result, 7, 4, (int[]){4597, -1765, 206, -5401, -512, 159, -15, 647, -5547, 2117, -104, 6407, 1720, -523, 199, -1962, 12587, -4696, 281, -14286, 8973, -3330, 436, -9965, 3439, -1138, 222, -3721});
-}
+// /* evaluate_expr_sf tests*/
+// Test(base_evaluate_expr, expr01, .description="Given root of a tree, evaluation of an expression") {
+//     bst_sf* root = build_bst();
+//     matrix_sf* result = evaluate_expr_sf('R', "G * C + F'", root);
+//     expect_matrices_equal(result, 7, 4, (int[]){4597, -1765, 206, -5401, -512, 159, -15, 647, -5547, 2117, -104, 6407, 1720, -523, 199, -1962, 12587, -4696, 281, -14286, 8973, -3330, 436, -9965, 3439, -1138, 222, -3721});
+// }
 
 // Test(base_evaluate_expr, expr02, .description="Given root of a tree, evaluation of an expression") {
 //     bst_sf* root = build_bst();
@@ -448,11 +448,11 @@ Test(base_evaluate_expr, expr01, .description="Given root of a tree, evaluation 
 //     expect_matrices_equal(result, 4, 3, (int[]){-11171376, 56535582, 3236371, 69463160, -416294603, -47900609, 76095851, -459940949, -56668593, 60848961, -362841916, -37213021});
 // }
 
-// /* execute_script_sf tests */
-// // 1. call execute_script_sf() to check for correctness()
-// // 2. call execute_script_sf() via valgrind to check for memory errors
-// Test(base_execute, add_mats01) { run_script_without_valgrind("script01"); }
-// Test(base_execute_valgrind, add_mats01) { expect_no_valgrind_errors(run_script_with_valgrind("script01")); }
+/* execute_script_sf tests */
+// 1. call execute_script_sf() to check for correctness()
+// 2. call execute_script_sf() via valgrind to check for memory errors
+Test(base_execute, add_mats01) { run_script_without_valgrind("script01"); }
+Test(base_execute_valgrind, add_mats01) { expect_no_valgrind_errors(run_script_with_valgrind("script01")); }
 
 // Test(base_execute, add_mats02) { run_script_without_valgrind("script02"); }
 // Test(base_execute_valgrind, add_mats02) { expect_no_valgrind_errors(run_script_with_valgrind("script02")); }
@@ -502,8 +502,8 @@ Test(base_evaluate_expr, expr01, .description="Given root of a tree, evaluation 
 // Test(base_execute, script17) { run_script_without_valgrind("script17"); } // (A' * B + C)'
 // Test(base_execute_valgrind, script17) { expect_no_valgrind_errors(run_script_with_valgrind("script17")); }
 
-// Test(base_execute, script18) { run_script_without_valgrind("script18"); } 
-// Test(base_execute_valgrind, script18) { expect_no_valgrind_errors(run_script_with_valgrind("script18")); }
+Test(base_execute, script18) { run_script_without_valgrind("script18"); } 
+Test(base_execute_valgrind, script18) { expect_no_valgrind_errors(run_script_with_valgrind("script18")); }
 
 // Test(base_execute, script19) { run_script_without_valgrind("script19"); } 
 // Test(base_execute_valgrind, script19) { expect_no_valgrind_errors(run_script_with_valgrind("script19")); }

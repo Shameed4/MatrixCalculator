@@ -1,4 +1,8 @@
 #include "../include/hw6.h"
+#define TEST_TIMEOUT 10
+#define TEST_INPUT_DIR "tests.in"
+#define TEST_OUTPUT_DIR "tests.out"
+static char test_log_outfile[100];
 
 bst_sf* build_bst() {
     matrix_sf *A = copy_matrix(3, 5, (int[]){-4, 18, 6, 7, 10, -14, 29, 8, 21, -99, 0, 7, 5, 2, -9});
@@ -199,40 +203,36 @@ char priority(char c) {
 
 char* infix2postfix_sf(char *infix) {
     char stack[MAX_LINE_LEN+1] = {'$'};
-    char *postfix = malloc(sizeof(char) * MAX_LINE_LEN+1);
+    char *postfix = calloc(MAX_LINE_LEN + 1, sizeof(char));
     
-    char *infixPtr = infix; // points to current infix character being evaluated
-    char *postfixPtr = postfix; // points to where next element should be added
-    char *stackPtr = stack; // points to where next element should be added
+    int infixIdx = 0;
+    int postfixIdx = 0;
+    int stackIdx = 1;
     
-    while (*infixPtr != '\0') {
-        if (*infixPtr == '(')
-            *stackPtr++ = '(';
-        else if (*infixPtr == ')') {
-            stackPtr--;
-            while (*stackPtr != '(') {
-                *postfixPtr++ = *stackPtr;
-                stackPtr--;
+    while (infix[infixIdx] && infix[infixIdx] != '\n') {
+        if (infix[infixIdx] == '(')
+            stack[stackIdx++] = '(';
+        
+        else if (infix[infixIdx] == ')') {
+            stackIdx--;
+            while (stack[stackIdx] != '(') {
+                postfix[postfixIdx++] = stack[stackIdx--];
             }
         }
-        else if (*infixPtr == '+' || *infixPtr == '*' || *infixPtr == '\'') {
-            while (priority(*(stackPtr-1)) >= priority(*infixPtr)) {
-                *postfixPtr++ = *(stackPtr-1);
-                stackPtr--;
+        else if (infix[infixIdx] == '+' || infix[infixIdx] == '*' || infix[infixIdx] == '\'') {
+            while (priority(stack[stackIdx - 1]) >= priority(infix[infixIdx])) {
+                postfix[postfixIdx++] = stack[--stackIdx];
             }
-            *stackPtr++ = *infixPtr;
+            stack[stackIdx++] = infix[infixIdx];
         }
-        else if (isalpha(*infixPtr)) {
-            *postfixPtr++ = *infixPtr;
+        else if (isalpha(infix[infixIdx])) {
+            postfix[postfixIdx++] = infix[infixIdx];
         }
-        infixPtr++;
+        infixIdx++;
     }
-    while (*(stackPtr-1) != '$') {
-        *postfixPtr++ = *(stackPtr-1);
-        stackPtr--;
+    while (stack[--stackIdx] != '$') {
+        postfix[postfixIdx++] = stack[stackIdx];
     }
-    
-    *postfixPtr++ = '\0';
 
     return postfix;
 }
@@ -242,51 +242,41 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
     char postfix[strlen(post)+1];
     strcpy(postfix, post);
     free(post);
+    fprintf(stderr, "Postfix expression: %s\n", postfix);
     char *postfixPtr = postfix;
     
-    fprintf(stderr, "Test1\n");
     matrix_sf *stack[MAX_LINE_LEN];
-    matrix_sf **stackPtr = &stack[0];
+    matrix_sf **stackPtr = stack;
 
     while (*postfixPtr != '\0') {
         fprintf(stderr, "%c\n", *postfixPtr);
         if (*postfixPtr == '+') {
             matrix_sf *mat2 = *--stackPtr;
-            if (!isalpha(mat2->name)) {
-                printf("freed: %c\n", mat2->name);
-                free(mat2);
-            }
             matrix_sf *mat1 = *--stackPtr;
-            if (!isalpha(mat1->name)) {
-                printf("freed: %c\n", mat1->name);
-                free(mat1);
-            }
             matrix_sf *eval = add_mats_sf(mat1, mat2);
+            if (!isalpha(mat1->name))
+                free(mat1);
+            if (!isalpha(mat2->name))
+                free(mat2);
             *stackPtr++ = eval;
             eval->name = '?';
         }
         else if (*postfixPtr == '*') {
             matrix_sf *mat2 = *--stackPtr;
-            if (!isalpha(mat2->name)) {
-                printf("freed: %c\n", mat2->name);
-                free(mat2);
-            }
             matrix_sf *mat1 = *--stackPtr;
-            if (!isalpha(mat1->name)) {
-                printf("freed: %c\n", mat1->name);
-                free(mat1);
-            }
             matrix_sf *eval = mult_mats_sf(mat1, mat2);
+            if (!isalpha(mat1->name))
+                free(mat1);
+            if (!isalpha(mat2->name))
+                free(mat2);
             *stackPtr++ = eval;
             eval->name = '?';
         }
         else if (*postfixPtr == '\'') {
             matrix_sf *mat = *--stackPtr;
-            if (!isalpha(mat->name)) {
-                printf("freed: %c\n", mat->name);
-                free(mat);
-            }
             matrix_sf *eval = transpose_mat_sf(mat);
+            if (!isalpha(mat->name))
+                free(mat);
             *stackPtr++ = eval;
             eval->name = '?';
         }
@@ -296,11 +286,58 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
         }
         postfixPtr++;
     }
+    (*stack)->name = name;
     return *stack;
 }
 
 matrix_sf *execute_script_sf(char *filename) {
-   return NULL;
+    FILE *f = fopen(filename, "r");
+    
+    char *line = NULL;
+    size_t lineLength = 0;
+    
+    matrix_sf *last = NULL;
+    bst_sf *root = NULL;
+    while (getline(&line, &lineLength, f) != -1) {
+        fprintf(stderr, "Test 1 Line: %s\n", line);
+        if (!strchr(line, '='))
+            break;
+        fprintf(stderr, "Test 2\n");
+        int lineIdx = 0;
+        char name;
+        while (!isalpha(line[lineIdx]))
+            lineIdx++;
+    
+        name = line[lineIdx++];
+        fprintf(stderr, "Test 3\n");
+        while (line[lineIdx++] != '=');
+        
+        fprintf(stderr, "Line 3/4: %s\n", line+lineIdx);
+        if (strchr(line, '[')) {
+            fprintf(stderr, "Before creating matrix\n");
+            last = create_matrix_sf(name, &line[lineIdx]);
+            fprintf(stderr, "After creating. Name: %c\n", last->name);
+        }
+        else {
+            fprintf(stderr, "Before evaluating expression. Expression: '%s'\n", &line[lineIdx]);
+            last = evaluate_expr_sf(name, &line[lineIdx], root); // I believe new line is causing this issue?
+            fprintf(stderr, "After evaluating expression\n");
+        }
+        fprintf(stderr, "Test 4\n");
+        free(line);
+        fprintf(stderr, "Test 5\n");
+        line = NULL;
+        lineLength = 0;
+        fprintf(stderr, "Test 6\n");
+        root = insert_bst_sf(last, root);
+        fprintf(stderr, "Test 7\n");
+    }
+    matrix_sf *ret = copy_matrix(last->num_rows, last->num_cols, last->values);
+    ret->name = last->name;
+
+    free_bst_sf(root);
+
+    return ret;
 }
 
 // This is a utility function used during testing. Feel free to adapt the code to implement some of
@@ -330,5 +367,6 @@ void print_matrix_sf(matrix_sf *mat) {
 
 int main() {
     bst_sf *root = build_bst();
-    matrix_sf* result = evaluate_expr_sf('R', "(G' * G)'", root);
+    matrix_sf* result = execute_script_sf("../tests.in/script01.txt");
+    print_matrix_sf(result);
 }
