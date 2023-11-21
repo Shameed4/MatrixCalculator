@@ -242,14 +242,12 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
     char postfix[strlen(post)+1];
     strcpy(postfix, post);
     free(post);
-    fprintf(stderr, "Postfix expression: %s\n", postfix);
     char *postfixPtr = postfix;
     
     matrix_sf *stack[MAX_LINE_LEN];
     matrix_sf **stackPtr = stack;
 
     while (*postfixPtr != '\0') {
-        fprintf(stderr, "%c\n", *postfixPtr);
         if (*postfixPtr == '+') {
             matrix_sf *mat2 = *--stackPtr;
             matrix_sf *mat1 = *--stackPtr;
@@ -299,44 +297,35 @@ matrix_sf *execute_script_sf(char *filename) {
     matrix_sf *last = NULL;
     bst_sf *root = NULL;
     while (getline(&line, &lineLength, f) != -1) {
-        fprintf(stderr, "Test 1 Line: %s\n", line);
         if (!strchr(line, '='))
             break;
-        fprintf(stderr, "Test 2\n");
         int lineIdx = 0;
         char name;
         while (!isalpha(line[lineIdx]))
             lineIdx++;
-    
+        
         name = line[lineIdx++];
-        fprintf(stderr, "Test 3\n");
         while (line[lineIdx++] != '=');
         
-        fprintf(stderr, "Line 3/4: %s\n", line+lineIdx);
         if (strchr(line, '[')) {
-            fprintf(stderr, "Before creating matrix\n");
             last = create_matrix_sf(name, &line[lineIdx]);
-            fprintf(stderr, "After creating. Name: %c\n", last->name);
         }
         else {
-            fprintf(stderr, "Before evaluating expression. Expression: '%s'\n", &line[lineIdx]);
             last = evaluate_expr_sf(name, &line[lineIdx], root); // I believe new line is causing this issue?
-            fprintf(stderr, "After evaluating expression\n");
         }
-        fprintf(stderr, "Test 4\n");
         free(line);
-        fprintf(stderr, "Test 5\n");
         line = NULL;
         lineLength = 0;
-        fprintf(stderr, "Test 6\n");
         root = insert_bst_sf(last, root);
-        fprintf(stderr, "Test 7\n");
     }
+    free(line);
+    fclose(f);
     matrix_sf *ret = copy_matrix(last->num_rows, last->num_cols, last->values);
     ret->name = last->name;
 
     free_bst_sf(root);
 
+    // printf("%p %d\n", ret, sizeof(matrix_sf) + ret->num_rows * ret->num_cols * sizeof(int));
     return ret;
 }
 
@@ -357,6 +346,7 @@ void print_matrix_sf(matrix_sf *mat) {
     assert(mat != NULL);
     assert(mat->num_rows <= 1000);
     assert(mat->num_cols <= 1000);
+    printf("%d %d ", mat->num_rows, mat->num_cols);
     for (unsigned int i = 0; i < mat->num_rows*mat->num_cols; i++) {
         printf("%d", mat->values[i]);
         if (i < mat->num_rows*mat->num_cols-1)
@@ -366,7 +356,8 @@ void print_matrix_sf(matrix_sf *mat) {
 }
 
 int main() {
-    bst_sf *root = build_bst();
+    // bst_sf *root = build_bst();
     matrix_sf* result = execute_script_sf("../tests.in/script01.txt");
     print_matrix_sf(result);
+    free(result);
 }

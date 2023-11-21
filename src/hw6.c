@@ -250,6 +250,7 @@ matrix_sf *execute_script_sf(char *filename) {
         lineLength = 0;
         root = insert_bst_sf(last, root);
     }
+    free(line);
     fclose(f);
     matrix_sf *ret = copy_matrix(last->num_rows, last->num_cols, last->values);
     ret->name = last->name;
