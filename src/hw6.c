@@ -1,5 +1,8 @@
 #include "hw6.h"
 
+/**
+ * takes a matrix and inserts it in to the bst
+*/
 bst_sf* insert_bst_sf(matrix_sf *mat, bst_sf *root) {
     bst_sf *new = malloc(sizeof(bst_sf));
     new->mat = mat;
@@ -88,7 +91,7 @@ matrix_sf* transpose_mat_sf(const matrix_sf *mat) {
 }
 
 matrix_sf* create_matrix_sf(char name, const char *expr) {
-    char *curr = expr;
+    const char *curr = expr;
     int NR = strtol(curr, &curr, 10);
     int NC = strtol(curr, &curr, 10);
     matrix_sf *m = malloc(sizeof(matrix_sf) + NR * NC * sizeof(int));
