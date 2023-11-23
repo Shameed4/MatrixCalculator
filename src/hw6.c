@@ -133,8 +133,8 @@ matrix_sf* create_matrix_sf(char name, const char *expr) {
     const char *curr = expr;
 
     // get the number of rows and columns, also setting curr to the point after the numbers
-    int NR = strtol(curr, &curr, 10);
-    int NC = strtol(curr, &curr, 10);
+    int NR = strtol(curr, (char**)&curr, 10);
+    int NC = strtol(curr, (char**)&curr, 10);
     
     // create the matrix 
     matrix_sf *m = malloc(sizeof(matrix_sf) + NR * NC * sizeof(int));
@@ -151,7 +151,7 @@ matrix_sf* create_matrix_sf(char name, const char *expr) {
             curr++;
         }
         if (*curr == '-' || isdigit(*curr)) {
-            m->values[i] = strtol(curr, &curr, 10);
+            m->values[i] = strtol(curr, (char**)&curr, 10);
             i++;
         }
     }
