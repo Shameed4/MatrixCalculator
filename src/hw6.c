@@ -299,8 +299,12 @@ matrix_sf *execute_script_sf(char *filename) {
     matrix_sf *last = NULL;
     bst_sf *root = NULL;
     while (getline(&line, &lineLength, f) != -1) {
-        if (!strchr(line, '='))
-            break; // test this later? this should probably be a continue
+        if (!strchr(line, '=')) {
+            free(line);
+            line = NULL;
+            lineLength = 0;
+            continue; 
+        }
         int lineIdx = 0;
         char name;
         
