@@ -1,4 +1,4 @@
-a=1 2[1 2;]    
-b=2 1[2; 1]    
-what
-c = a + b'
+A=1 2[1 2;]    
+B=2 1[2; 1]    
+this line isn't doing anything :D
+C = A + B'

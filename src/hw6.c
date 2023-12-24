@@ -230,7 +230,7 @@ char* infix2postfix_sf(char *infix) {
 }
 
 /**
- * returns the matrix obtained by evaluating the given infix expression and root containing matrices, naming it with name
+ * returns a named matrix that is evaluated given the infex expression
 */
 matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
     char *post = infix2postfix_sf(expr); // convert infix to postfix
@@ -283,8 +283,15 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
         }
         postfixPtr++;
     }
-    (*stack)->name = name;
-    return *stack;
+    
+    if (!isalpha((*stack)->name)) {
+        (*stack)->name = name;
+        return *stack;
+    }
+
+    matrix_sf *ret = copy_matrix((*stack)->num_rows, (*stack)->num_cols, (*stack)->values);
+    ret->name = name;
+    return ret;
 }
 
 /**
@@ -333,8 +340,6 @@ matrix_sf *execute_script_sf(char *filename) {
     ret->name = last->name;
 
     free_bst_sf(root);
-
-    // printf("%p %d\n", ret, sizeof(matrix_sf) + ret->num_rows * ret->num_cols * sizeof(int));
     return ret;
 }
 
