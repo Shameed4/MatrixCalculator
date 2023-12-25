@@ -27,6 +27,7 @@ bst_sf* insert_bst_sf(matrix_sf *mat, bst_sf *root);
 matrix_sf* find_bst_sf(char name, bst_sf *root); 
 void free_bst_sf(bst_sf *root); 
 matrix_sf* add_mats_sf(const matrix_sf *mat1, const matrix_sf *mat2); 
+matrix_sf* sub_mats_sf(const matrix_sf *mat1, const matrix_sf *mat2); 
 matrix_sf* mult_mats_sf(const matrix_sf *mat1, const matrix_sf *mat2); 
 matrix_sf* transpose_mat_sf(const matrix_sf *mat); 
 matrix_sf* create_matrix_sf(char name, const char *expr); 

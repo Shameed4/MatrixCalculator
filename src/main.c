@@ -86,6 +86,23 @@ matrix_sf* add_mats_sf(const matrix_sf *mat1, const matrix_sf *mat2) {
 }
 
 /**
+ * Subtracts 2 matrices (assumes dimensions are compatible)
+*/
+matrix_sf* sub_mats_sf(const matrix_sf *mat1, const matrix_sf *mat2) {
+    // allocate memory for new matrix
+    matrix_sf *diff = malloc(sizeof(matrix_sf) + mat1->num_rows * mat1->num_cols * sizeof(int));
+
+    // copy dimensions of mat1
+    *diff = *mat1;
+
+    // subtract values of 2 matrices in 1D (since all 3 matrices have same size, no need to do it by row and column)
+    for (unsigned int i = 0; i < diff->num_rows * diff->num_cols; i++) {
+        diff->values[i] = mat1->values[i] - mat2->values[i];
+    }
+    return diff;
+}
+
+/**
  * Multiplies matrices mat1 and mat2
 */
 matrix_sf* mult_mats_sf(const matrix_sf *mat1, const matrix_sf *mat2) {
@@ -160,7 +177,7 @@ matrix_sf* create_matrix_sf(char name, const char *expr) {
 }
 
 /**
- * Helper method for the conversion from postfix to infix. Returns priority of a token.
+ * Helper method for the conversion from postfix to infix. Returns priority of a token. Higher value = higher priority
 */
 char priority(char c) {
     switch (c) {
@@ -171,6 +188,7 @@ char priority(char c) {
             return 1;
             break;
         case '+':
+        case '-':
             return 2;
             break;
         case '*':
@@ -208,7 +226,7 @@ char* infix2postfix_sf(char *infix) {
             }
         }
         // when encountering an operation, check its priority
-        else if (infix[infixIdx] == '+' || infix[infixIdx] == '*' || infix[infixIdx] == '\'') {
+        else if (infix[infixIdx] == '+' || infix[infixIdx] == '-' || infix[infixIdx] == '*' || infix[infixIdx] == '\'') {
             while (priority(stack[stackIdx - 1]) >= priority(infix[infixIdx])) {
                 postfix[postfixIdx++] = stack[--stackIdx];
             }
@@ -243,27 +261,28 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
     matrix_sf **stackPtr = stack;
 
     while (*postfixPtr != '\0') {
-        // when encountering addition, pop 2 elements from the stack and add them, adding result to stack
-        if (*postfixPtr == '+') {
+        // when encountering binary operation (+ - *), pop 2 elements from the stack and evaluate them, adding result to stack
+        if (*postfixPtr == '+' || *postfixPtr == '-' || *postfixPtr == '*') {
             matrix_sf *mat2 = *--stackPtr;
             matrix_sf *mat1 = *--stackPtr;
-            matrix_sf *eval = add_mats_sf(mat1, mat2);
+            matrix_sf *eval;
+            switch (*postfixPtr) {
+                case '+':
+                    eval = add_mats_sf(mat1, mat2);
+                    break;
+                case '-':
+                    eval = sub_mats_sf(mat1, mat2);
+                    break;
+                case '*':
+                    eval = mult_mats_sf(mat1, mat2);
+                    break;
+            }
+            
             if (!isalpha(mat1->name))
                 free(mat1);
             if (!isalpha(mat2->name))
                 free(mat2);
-            *stackPtr++ = eval;
-            eval->name = '?';
-        }
-        // when encountering multiplication, pop 2 elements from the stack and multliply them, adding result to stack
-        else if (*postfixPtr == '*') {
-            matrix_sf *mat2 = *--stackPtr;
-            matrix_sf *mat1 = *--stackPtr;
-            matrix_sf *eval = mult_mats_sf(mat1, mat2);
-            if (!isalpha(mat1->name))
-                free(mat1);
-            if (!isalpha(mat2->name))
-                free(mat2);
+            
             *stackPtr++ = eval;
             eval->name = '?';
         }
@@ -284,11 +303,13 @@ matrix_sf* evaluate_expr_sf(char name, char *expr, bst_sf *root) {
         postfixPtr++;
     }
     
+    // if the matrix is not in the tree, then we can simply return it
     if (!isalpha((*stack)->name)) {
         (*stack)->name = name;
         return *stack;
     }
 
+    // if the matrix is in the tree, we need to create a new copy to put to the tree in order to prevent double freeing
     matrix_sf *ret = copy_matrix((*stack)->num_rows, (*stack)->num_cols, (*stack)->values);
     ret->name = name;
     return ret;
